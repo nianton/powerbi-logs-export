@@ -19,7 +19,7 @@ Connect-ExchangeOnline -Credential $credential
 # Get the logs of previous day
 $startDate = (Get-Date).Date.AddDays(-1)
 $endDate = (Get-Date).Date
-$auditlogs = Search-UnifiedAuditLog -StartDate $startDate -EndDate $endDate -RecordType DataInsightsRestApiAudit
+$auditlogs = Search-UnifiedAuditLog -StartDate $startDate -EndDate $endDate -RecordType PowerBIAudit
 
 # Export the results to a local CSV file
 $auditFilename = "AuditLogs-" + $startDate.ToString("yyyyMMdd") + ".csv"
