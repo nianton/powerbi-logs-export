@@ -2,41 +2,107 @@ param naming object
 param location string = resourceGroup().location
 param tags object
 
-// App Service Plan name should be unique within the resource group, opting for the simple 'name' property
-resource appServicePlan 'Microsoft.Web/serverfarms@2020-12-01' = {
-  name: naming.appServicePlan.name
-  location: resourceGroup().location
-  tags: tags
-  sku: {
-    name: 'F1'
-    capacity: 1
+@secure()
+param logViewerUsername string
+
+@secure()
+param logViewerPassword string
+
+@allowed([
+  'standard'
+  'premium'
+])
+@description('Azure Key Vault SKU')
+param keyVaultSku string = 'premium'
+
+var resourceNames = {
+  functionApp: naming.functionApp.name
+  logStorageAccount: naming.storageAccount.nameUnique
+  keyVault: naming.keyVault.nameUnique
+}
+
+var secretNames = {
+  logViewerUsername: 'logViewerUsername'
+  logViewerPassword: 'logViewerPassword'
+  logStorageConnectionString: 'logStorageConnectionString'
+}
+
+var azureFunctionPlanSkuName = 'Y1'
+
+// Function Application (with respected Application Insights and Storage Account)
+// with the respective configuration, and deployment of the application
+module funcApp './modules/functionApp.module.bicep' = {
+  name: 'funcApp'
+  params: {
+    location: location
+    name: resourceNames.functionApp
+    managedIdentity: true
+    tags: tags
+    skuName: azureFunctionPlanSkuName
+    funcAppSettings: [
+      {
+        name: 'LogViewerUsername'
+        value: '@Microsoft.KeyVault(VaultName=${resourceNames.keyVault};SecretName=${secretNames.logViewerUsername})'
+      }
+      {
+        name: 'LogViewerPassword'
+        value: '@Microsoft.KeyVault(VaultName=${resourceNames.keyVault};SecretName=${secretNames.logViewerPassword})'
+      }
+      {
+        name: 'LogStorageConnectionString'
+        value: '@Microsoft.KeyVault(VaultName=${resourceNames.keyVault};SecretName=${secretNames.logStorageConnectionString})'
+      }
+    ]
   }
 }
 
-// Web application name should be globally unique, we prefer the 'nameUnique' property here
-resource webApplication 'Microsoft.Web/sites@2018-11-01' = {
-  name: naming.appService.nameUnique
-  location: location
-  tags: union({
-    'hidden-related:${resourceGroup().id}/providers/Microsoft.Web/serverfarms/${appServicePlan.name}': 'Resource'
-  }, tags)
-  properties: {
-    serverFarmId: appServicePlan.id
+
+module keyVault 'modules/keyvault.module.bicep' = {
+  name: 'keyVault'
+  params: {
+    name: resourceNames.keyVault
+    location: location
+    skuName: keyVaultSku
+    tags: tags
+    accessPolicies: [
+      {
+        tenantId: funcApp.outputs.identity.tenantId
+        objectId: funcApp.outputs.identity.principalId
+        permissions: {
+          secrets: [
+            'get'
+          ]
+        }
+      }
+    ]
+    secrets: [
+      {
+        name: secretNames.logViewerUsername
+        value: logViewerUsername
+      }
+      {
+        name: secretNames.logViewerPassword
+        value: logViewerPassword
+      }
+      {
+        name: secretNames.logStorageConnectionString
+        value: auditLogStorage.outputs.connectionString
+      }
+    ]
   }
 }
+
 
 // Deploying a module, passing in the necessary naming parameters (storage account name should be also globally unique)
-module storage 'modules/storage.module.bicep' = {
+module auditLogStorage 'modules/storage.module.bicep' = {
   name: 'StorageAccountDeployment'
   params: {
     location: location
     kind: 'StorageV2'
     skuName: 'Standard_LRS'
-    name: naming.storageAccount.nameUnique
+    name: resourceNames.logStorageAccount
     tags: tags
   }
 }
 
-output storageAccountName string = storage.outputs.name
-output appServiceName string = webApplication.name
-output appServicePlanName string = appServicePlan.name
+output storageAccountName string = auditLogStorage.outputs.name

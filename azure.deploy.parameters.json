@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "applicationName": {
-      "value": "newapp"
+      "value": "pbiaudit"
     },
     "environment": {
       "value": "dev"
@@ -11,10 +11,14 @@
     "location": {
       "value": "westeurope"
     },
+    "logViewerUsername": {
+      "value": "value"      
+    },
+    "logViewerPassword": {
+      "value": "value"      
+    },
     "tags": {
       "value": {
-        "owner": "myself",
-        "costCenter": "personal wallet"
       }
     }
   }

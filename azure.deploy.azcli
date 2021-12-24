@@ -1,0 +1,4 @@
+SUBSCRIPTION_ID=xxx
+LOCATION=westeurope
+
+az deployment sub create --location $LOCATION --template-file ./azure.deploy.bicep --parameters ./azure.deploy.parameters.json

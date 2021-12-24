@@ -5,6 +5,12 @@ param applicationName string
 param environment string
 param tags object = {}
 
+@secure()
+param logViewerUsername string
+
+@secure()
+param logViewerPassword string
+
 var defaultTags = union({
   applicationName: applicationName
   environment: environment
@@ -39,6 +45,8 @@ module main 'main.bicep' = {
   params: {
     location: location
     naming: naming.outputs.names
+    logViewerUsername: logViewerUsername
+    logViewerPassword: logViewerPassword
     tags: defaultTags
   }
 }
@@ -46,6 +54,4 @@ module main 'main.bicep' = {
 // Customize outputs as required from the main deployment module
 output resourceGroupId string = rg.id
 output resourceGroupName string = rg.name
-output appServiceName string = main.outputs.appServiceName
-output appServicePlanName string = main.outputs.appServicePlanName
 output storageAccountName string = main.outputs.storageAccountName
