@@ -26,7 +26,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   properties: {
     accessTier: 'Hot'
     supportsHttpsTrafficOnly: true
-  }  
+  }
 }
 
 output id string = storage.id
