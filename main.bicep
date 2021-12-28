@@ -52,6 +52,10 @@ module funcApp './modules/functionApp.module.bicep' = {
         name: 'LogStorageConnectionString'
         value: '@Microsoft.KeyVault(VaultName=${resourceNames.keyVault};SecretName=${secretNames.logStorageConnectionString})'
       }
+      {
+        name: 'LogContainerName'
+        value: 'auditlogs'
+      }
     ]
   }
 }
