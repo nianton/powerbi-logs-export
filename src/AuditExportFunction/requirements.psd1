@@ -4,6 +4,5 @@
 @{
     # For latest supported version, go to 'https://www.powershellgallery.com/packages/Az'. 
     'Az' = '7.*'
-    'Az.Storage' = '4.1.0'
     'ExchangeOnlineManagement' = '2.*'
 }
